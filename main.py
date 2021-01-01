@@ -1,4 +1,5 @@
 import discord
+from discord.ext import commands
 from discord_slash import SlashCommand
 from discord_slash.utils import manage_commands
 import os
@@ -6,7 +7,12 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-client = discord.Client(intents=discord.Intents.all())
+client = commands.Bot(command_prefix="s!", intents=discord.Intents.all())
+
+for filename in os.listdir("./cogs"):
+    if filename.endswith(".py"):
+        client.load_extension(f"cogs.{filename[:-3]}")
+
 slash = SlashCommand(client, auto_register=True)
 
 guild_ids = [644875385452101633]  # Put your testing server ID.
@@ -41,6 +47,21 @@ async def _echo(ctx, string):
 )
 async def _mention(ctx, user):
     await ctx.send(content=user.mention)
+
+
+@client.event
+async def on_command_error(ctx, error):
+    if isinstance(error, commands.MissingRequiredArgument):
+        await ctx.send("Please pass in all required arguments.")
+    if isinstance(error, commands.CommandNotFound):
+        await ctx.send(
+            f"This command does not exist. Use `{client.command_prefix}help` to view all available commands."
+        )
+
+
+@client.command()
+async def test(ctx):
+    await ctx.send("heuue")
 
 
 client.run(os.getenv("TOKEN"))
