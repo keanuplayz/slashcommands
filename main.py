@@ -49,6 +49,19 @@ async def _mention(ctx, user):
     await ctx.send(content=user.mention)
 
 
+@slash.slash(
+    name="calc",
+    guild_ids=guild_ids,
+    options=[
+        manage_commands.create_option("digit", "number to add", 4, True),
+        manage_commands.create_option("digit2", "another number", 4, True),
+    ],
+)
+async def _calc(ctx, number1, number2):
+    result = number1 + number2
+    await ctx.send(content=result)
+
+
 @client.event
 async def on_command_error(ctx, error):
     if isinstance(error, commands.MissingRequiredArgument):
