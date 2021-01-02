@@ -13,7 +13,7 @@ for filename in os.listdir("./cogs"):
     if filename.endswith(".py"):
         client.load_extension(f"cogs.{filename[:-3]}")
 
-slash = SlashCommand(client, auto_register=True)
+slash = SlashCommand(client, auto_register=True, auto_delete=True)
 
 guild_ids = [644875385452101633]  # Put your testing server ID.
 
@@ -60,6 +60,40 @@ async def _mention(ctx, user):
 async def _calc(ctx, number1, number2):
     result = number1 + number2
     await ctx.send(content=result)
+
+
+@slash.slash(
+    name="embed",
+    guild_ids=guild_ids,
+    options=[
+        manage_commands.create_option("title", "Embed title to set.", 3, True),
+        manage_commands.create_option(
+            "description", "Embed description to set.", 3, True
+        ),
+        manage_commands.create_option("footer", "Embed footer to set.", 3, True),
+        manage_commands.create_option("author", "Embed header to set.", 3, True),
+        manage_commands.create_option("thumbnail", "Embed thumbnail to set.", 3, False),
+        manage_commands.create_option("image", "Embed image to set.", 3, False),
+    ],
+)
+async def _embed(ctx, title, desc, footer, author, thumbnail=None, image=None):
+    embed = discord.Embed(title=str(title), description=str(desc))
+    embed.set_author(name=str(author))
+    embed.set_footer(text=str(footer))
+    embed.set_thumbnail(url=str(thumbnail))
+    embed.set_image(url=str(image))
+    await ctx.send(embeds=[embed])
+
+
+@slash.slash(
+    name="hide",
+    guild_ids=guild_ids,
+    options=[
+        manage_commands.create_option("string", "A random piece of text.", 3, True)
+    ],
+)
+async def _hide(ctx, string):
+    await ctx.send(content=string, hidden=True)
 
 
 @client.event
