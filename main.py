@@ -3,6 +3,7 @@ from discord.ext import commands
 from discord_slash import SlashCommand
 from discord_slash.utils import manage_commands
 import os
+import requests
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -94,6 +95,55 @@ async def _embed(ctx, title, desc, footer, author, thumbnail=None, image=None):
 )
 async def _hide(ctx, string):
     await ctx.send(content=string, hidden=True)
+
+
+@slash.slash(
+    name="weather",
+    guild_ids=guild_ids,
+    options=[
+        manage_commands.create_option(
+            "city", "The city which's weather to display.", 3, True
+        ),
+    ],
+)
+async def _weather(ctx, city):
+    # Not at all shamelessly ripped from Lexi's bot.
+    weathertoken = os.getenv("WEATHER_TOKEN")
+    base_url = "http://api.weatherapi.com/v1/current.json?"
+    complete_url = base_url + "key=" + weathertoken + "&q=" + city
+    try:
+        response = requests.get(complete_url)
+    except BaseException:
+        await ctx.send("no")
+    res = response.json()
+    weather = res["current"]
+    location = res["location"]
+    condition = weather["condition"]
+
+    current_temperature = str(int(weather["temp_c"])) + "°C"
+    current_pressure = str(weather["pressure_mb"])[-3:] + "mBar"
+    current_humidity = str(weather["humidity"]) + "%"
+    image = "https:" + condition["icon"]
+    weather_timezone = location["localtime"]
+    weather_location = location["name"]
+    weather_description = "Description: " + condition["text"]
+    weather_wind_kph = str(weather["wind_kph"])
+    weather_wind_dir = str(weather["wind_dir"])
+
+    weatherembed = discord.Embed(
+        title="Weather for " + weather_location, color=0x7AC5C9
+    )
+    weatherembed.set_author(name=f"{client.user.name}", icon_url=client.user.avatar_url)
+    weatherembed.set_footer(text="https://weatherapi.com")
+    weatherembed.add_field(name="Temperature:", value=current_temperature)
+    weatherembed.add_field(name="Pressure:", value=current_pressure)
+    weatherembed.add_field(name="Humidity:", value=current_humidity)
+    weatherembed.add_field(
+        name="Wind:", value=weather_wind_kph + " km/h " + weather_wind_dir
+    )
+    weatherembed.add_field(name="Time:", value=weather_timezone)
+    weatherembed.set_thumbnail(url=image)
+    await ctx.send(embeds=[weatherembed])
 
 
 @client.event
